@@ -1424,6 +1424,8 @@ def test_stdio_server_parameters_preexec_and_process_group() -> None:
     def hook() -> None:
         pass
 
+    hook()
+
     params_custom = StdioServerParameters(
         command="echo",
         preexec_fn=hook,
@@ -1449,6 +1451,8 @@ async def test_create_platform_compatible_process_forwards_preexec_and_process_g
     def dummy_preexec() -> None:
         pass
 
+    dummy_preexec()
+
     await _create_platform_compatible_process(
         "test-command",
         ["--flag"],
@@ -1467,7 +1471,7 @@ async def test_preexec_fn_executes_in_child_process(tmp_path: Path) -> None:
     """preexec_fn is called and executes in the child process before exec."""
     log_file = tmp_path / "preexec.log"
 
-    def hook() -> None:
+    def hook() -> None:  # pragma: no cover
         with open(log_file, "w", encoding="utf-8") as f:
             f.write(f"{os.getpid()}")
 
@@ -1479,8 +1483,7 @@ async def test_preexec_fn_executes_in_child_process(tmp_path: Path) -> None:
 
     with anyio.fail_after(5.0):
         async with stdio_client(server_params):
-            while not log_file.exists():
-                await anyio.sleep(0.01)
+            assert log_file.exists()
             child_pid = int(log_file.read_text(encoding="utf-8").strip())
             assert child_pid != os.getpid()
 
